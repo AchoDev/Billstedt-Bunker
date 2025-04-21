@@ -84,6 +84,13 @@ class Player < GameObject
       rifle: Gun.new("rifle", 10, [60, 10]),
       pistol: Gun.new("pistol", 0.5, [50, 0])
     }
+
+    @gun_icons = {
+      shotgun: Gosu::Image.new("sprites/shotgun-icon.png"),
+      rifle: Gosu::Image.new("sprites/rifle-icon.png"),
+      pistol: Gosu::Image.new("sprites/pistol-icon.png")
+    }
+
     @player_sprites = {
       rifle: Gosu::Image.new("sprites/player1/rifle.png"),
       shotgun: Gosu::Image.new("sprites/player1/shotgun.png"),
@@ -130,24 +137,30 @@ class Player < GameObject
     # Gosu.draw_rect(pos[0] - w / 2, pos[1] - h / 2, w, h, Gosu::Color::BLACK)
 
     icon_x = 10
+    icon_y = 600
+    if @player2
+      icon_x = 600
+      icon_y = 10
+    end
     @gun_icons.each do |gun, icon|
-      if @player.current_gun.name == gun.to_s
-        icon.draw(icon_x, 600, 0, 0.2, 0.2, Gosu::Color::GREEN)
+      if @current_gun.name == gun.to_s
+        col = @player2 ? Gosu::Color::GREEN : Gosu::Color::RED 
+        icon.draw(icon_x, icon_y, 0, 0.2, 0.2, col)
       else
-        icon.draw(icon_x, 600, 0, 0.2, 0.2, Gosu::Color::WHITE)
+        icon.draw(icon_x, icon_y, 0, 0.2, 0.2, Gosu::Color::WHITE)
       end
       
-      icon.draw(icon_x, 600, 0, 0.2, 0.2)
+      icon.draw(icon_x, icon_y, 0, 0.2, 0.2)
 
 
       height_percentage = 0
-      gun_object = @player.guns[gun]
+      gun_object = @guns[gun]
 
       if gun_object.cooling_down
         height_percentage = 1 - (gun_object.cooldown_timer / gun_object.cooldown)
       end
 
-      Gosu.draw_rect(icon_x, 600, 100, 100 * height_percentage, Gosu::Color.argb(200, 0, 0, 0))
+      Gosu.draw_rect(icon_x, icon_y, 100, 100 * height_percentage, Gosu::Color.argb(200, 0, 0, 0))
       
       icon_x += 100
     end  
@@ -162,10 +175,10 @@ class Player < GameObject
     @last_pos = [@x, @y]
 
     movement_buttons = {
-      right: !@player2 ? Gosu::KB_D : Gosu::KB_RIGHT,
-      left: !@player2 ? Gosu::KB_A : Gosu::KB_LEFT,
-      up: !@player2 ? Gosu::KB_W : Gosu::KB_UP,
-      down: !@player2 ? Gosu::KB_S : Gosu::KB_DOWN
+      right: !@player2 ? Gosu::KB_D : Gosu::KB_SEMICOLON,
+      left: !@player2 ? Gosu::KB_A : Gosu::KB_K,
+      up: !@player2 ? Gosu::KB_W : Gosu::KB_O,
+      down: !@player2 ? Gosu::KB_S : Gosu::KB_L
     }
 
     @velocity[0] -= @drag * @velocity[0]
@@ -223,10 +236,10 @@ class Player < GameObject
   def button_down(id)
 
     action_buttons = {
-      dash: !@player2 ? Gosu::KB_Q : Gosu::KB_P,
-      shotgun: !@player2 ? Gosu::KB_1 : Gosu::KB_9,
-      rifle: !@player2 ? Gosu::KB_2 : Gosu::KB_0,
-      pistol: !@player2 ? Gosu::KB_3 : Gosu::KB_MINUS
+      dash: !@player2 ? Gosu::KB_Q : Gosu::KB_I,
+      shotgun: !@player2 ? Gosu::KB_1 : Gosu::KB_8,
+      rifle: !@player2 ? Gosu::KB_2 : Gosu::KB_9,
+      pistol: !@player2 ? Gosu::KB_3 : Gosu::KB_0
     }
 
     case id

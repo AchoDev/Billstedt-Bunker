@@ -48,8 +48,11 @@ class BillstedtBunker < Gosu::Window
 
   def button_down(id)
     case id
-    when Gosu::KB_J
+    when Gosu::KB_E
       @player.create_bullet(@gameobjects)
+    when Gosu::KB_P
+      @player2.create_bullet(@gameobjects)
+    
     end
 
     @gameobjects.each do |object|
