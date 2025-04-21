@@ -6,7 +6,7 @@ require 'gosu'
 
 class Bullet < GameObject
 
-  def initialize(x, y, angle, target_tag)
+  def initialize(x, y, angle)
     super(x, y, "bullet")
     
     @width = 5
@@ -17,7 +17,6 @@ class Bullet < GameObject
 
     @angle = angle - 90
     @speed = 10
-    @target_tag = target_tag
 
     @image = Gosu.render(@width, @height) do
       Gosu.draw_rect(0, 0, @width, @height, Gosu::Color::BLACK, 0)
@@ -33,11 +32,16 @@ class Bullet < GameObject
     @y += @speed * Math.sin(@angle * Math::PI / 180)
 
     gameobjects.each do |target|
-      next unless target.tag == @target_tag
+      if target.tag == "collider"
+        if rotated_rect_circle_collision(target.x, target.y, target.width, target.height, target.angle, @x + @width / 2, @y - @height / 2, @width / 2)
+          gameobjects.delete(self)
+        end
+      end
 
-      if check_collision(target)
-        gameobjects.delete(target)
-        gameobjects.delete(self) 
+      next unless target.tag == "player"
+
+      if circle_collision(@x, @y, @width / 2, target.x + target.width / 2, target.y - target.height / 2, target.width / 2)
+        target.health -= 1
       end
     end
   end

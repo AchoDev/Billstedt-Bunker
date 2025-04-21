@@ -57,7 +57,7 @@ end
 
 class Player < GameObject
 
-  attr_accessor :current_gun, :guns
+  attr_accessor :current_gun, :guns, :health
 
   def initialize(x, y, player2 = false)
     super(x, y, "player")
@@ -69,9 +69,13 @@ class Player < GameObject
 
     @enemy = nil
     @velocity = [0, 0]
-    @speed = 10
+
+    @speed = 6
+    @dash_speed = 20
     @drag = 0.1
     @movement_direction = [0, 0]
+
+    @health = 3
 
     @player2 = player2
 
@@ -124,6 +128,29 @@ class Player < GameObject
     # w = 10
     # h = 10
     # Gosu.draw_rect(pos[0] - w / 2, pos[1] - h / 2, w, h, Gosu::Color::BLACK)
+
+    icon_x = 10
+    @gun_icons.each do |gun, icon|
+      if @player.current_gun.name == gun.to_s
+        icon.draw(icon_x, 600, 0, 0.2, 0.2, Gosu::Color::GREEN)
+      else
+        icon.draw(icon_x, 600, 0, 0.2, 0.2, Gosu::Color::WHITE)
+      end
+      
+      icon.draw(icon_x, 600, 0, 0.2, 0.2)
+
+
+      height_percentage = 0
+      gun_object = @player.guns[gun]
+
+      if gun_object.cooling_down
+        height_percentage = 1 - (gun_object.cooldown_timer / gun_object.cooldown)
+      end
+
+      Gosu.draw_rect(icon_x, 600, 100, 100 * height_percentage, Gosu::Color.argb(200, 0, 0, 0))
+      
+      icon_x += 100
+    end  
   end
 
   def set_enemy(enemy)
@@ -131,6 +158,8 @@ class Player < GameObject
   end
 
   def update(gameobjects)
+
+    @last_pos = [@x, @y]
 
     movement_buttons = {
       right: !@player2 ? Gosu::KB_D : Gosu::KB_RIGHT,
@@ -165,6 +194,30 @@ class Player < GameObject
 
     normalize()
     apply_speed()
+
+
+    gameobjects.each do |target|
+      next unless target.tag == "collider"
+      if rotated_rect_circle_collision(
+        target.x, target.y, target.width, target.height, target.angle * Math::PI / 180,
+        @x + @width / 2, @last_pos[1] - @height / 2, @width / 2
+      )
+        # Collision detected
+        @x = @last_pos[0]
+        @velocity[0] = 0
+        
+      end
+
+      if rotated_rect_circle_collision(
+        target.x, target.y, target.width, target.height, target.angle * Math::PI / 180,
+        @last_pos[0] + @width / 2, @y - @height / 2, @width / 2
+      )
+        # Collision detected
+        @y = @last_pos[1]
+        @velocity[1] = 0
+        
+      end
+    end
   end
 
   def button_down(id)
@@ -208,8 +261,7 @@ class Player < GameObject
   end
 
   def dash
-    dash_speed = 30
-    @velocity = [@movement_direction[0] * dash_speed, @movement_direction[1] * dash_speed]
+    @velocity = [@movement_direction[0] * @dash_speed, @movement_direction[1] * @dash_speed]
   end
 
   def normalize
@@ -241,14 +293,14 @@ class Player < GameObject
       pos = calculate_bullet_position(@current_gun.offset)
 
       angles.map do |angle|
-        gameobjects.push(Bullet.new(pos[0], pos[1], angle + @angle + 90, "enemy"))
+        gameobjects.push(Bullet.new(pos[0], pos[1], angle + @angle + 90))
       end
 
     when @guns[:rifle]
       Thread.new do
         5.times do
           pos = calculate_bullet_position(@current_gun.offset)
-          bullet = Bullet.new(pos[0], pos[1], @angle + 90, "enemy")
+          bullet = Bullet.new(pos[0], pos[1], @angle + 90)
           gameobjects.push(bullet)
           sleep(0.1)
           @current_gun.shoot_sound.play(0.5, 1, false)
@@ -256,7 +308,7 @@ class Player < GameObject
       end
     when @guns[:pistol]
       pos = calculate_bullet_position(@current_gun.offset)
-      bullet = Bullet.new(pos[0], pos[1], @angle + 90, "enemy")
+      bullet = Bullet.new(pos[0], pos[1], @angle + 90)
       gameobjects.push(bullet)
     end
   end
