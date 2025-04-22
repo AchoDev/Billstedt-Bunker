@@ -23,8 +23,8 @@ class Bullet < GameObject
     end
   end
 
-  def draw
-    @image.draw_rot(@x + @width / 2, @y - @height / 2, 1, @angle - 90)
+  def draw(cam)
+    @image.draw_rot(cam[0] + @x + @width / 2, cam[1] + @y - @height / 2, 1, @angle - 90)
   end
 
   def update(gameobjects)

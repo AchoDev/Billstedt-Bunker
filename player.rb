@@ -69,7 +69,7 @@ end
 
 class Player < GameObject
 
-  attr_accessor :current_gun, :guns, :health, :winning_sequence
+  attr_accessor :current_gun, :guns, :health, :winning_sequence, :movement_direction, :shake_camera
 
   def initialize(x, y, player2 = false)
     super(x, y, "player")
@@ -87,7 +87,14 @@ class Player < GameObject
     @drag = 0.1
     @movement_direction = [0, 0]
 
-    @health = 1
+    @shake_camera = nil
+
+    @walk_sound = {
+      playing: false,
+      sound: Gosu::Sample.new("sounds/walk.mp3")
+    }
+
+    @health = 10
     @max_health = 10
 
     @winning_sequence = false
@@ -136,7 +143,7 @@ class Player < GameObject
     @current_gun = @guns[:shotgun]
   end
 
-  def draw
+  def draw(camera_movement)
     # Gosu.draw_rect(@x + @width / 2, @y - @height / 2, @width, @height, Gosu::Color::BLACK)
 
     # @guns[:shotgun].offset[1] += 1
@@ -155,7 +162,7 @@ class Player < GameObject
       if @current_gun.name == gun.to_s
         # sprite.draw_rot(@x + @width / 2, @y - @height / 2, 1, @angle + 90, 0.5, 0.5, 0.05, 0.05)
         col = @winning_sequence ? Gosu::Color::BLACK : Gosu::Color::WHITE
-        sprite.draw_rot(@x + @width / 2, @y - @height / 2, 0, @angle + 90, 0.45, 0.75, 0.05, 0.05, col)
+        sprite.draw_rot(camera_movement[0] + @x + @width / 2,camera_movement[0] + @y - @height / 2, 0, @angle + 90, 0.45, 0.75, 0.05, 0.05, col)
       end
     end
 
@@ -202,7 +209,6 @@ class Player < GameObject
     bar_width = 250
     bar_height = 30
     percentage = @health / @max_health.to_f
-    puts percentage
     border = 5
 
     Gosu.draw_rect(@health_bar[:pos][0] - border, @health_bar[:pos][1] - border, bar_width + border * 2, bar_height + border * 2, Gosu::Color.argb(150, 0, 0, 0), 5)
@@ -214,6 +220,9 @@ class Player < GameObject
   end
 
   def take_damage
+
+    @shake_camera.call if @shake_camera.respond_to?(:call)
+
     @health -= 1
     
     if @health <= 0
@@ -251,9 +260,6 @@ class Player < GameObject
     @velocity[0] -= @drag * @velocity[0]
     @velocity[1] -= @drag * @velocity[1]
 
-    @x += @velocity[0]
-    @y += @velocity[1]
-
     @movement_direction = [0, 0]
 
     if Gosu.button_down?(movement_buttons[:left])
@@ -275,7 +281,20 @@ class Player < GameObject
     normalize()
     apply_speed()
 
+    if (@movement_direction[0] != 0 || @movement_direction[1] != 0) && !@walk_sound[:playing] 
+      
+      @walk_sound[:playing] = true
+      Thread.new do
+        while @movement_direction[0] != 0 || @movement_direction[1] != 0
+          @walk_sound[:sound].play(0.5, rand(0.9..1.1), false)
+          sleep(0.2)
+        end
 
+        @walk_sound[:playing] = false
+      end
+    end
+
+    @x += @velocity[0]
     gameobjects.each do |target|
       next unless target.tag == "collider"
       if rotated_rect_circle_collision(
@@ -285,9 +304,13 @@ class Player < GameObject
         # Collision detected
         @x = @last_pos[0]
         @velocity[0] = 0
-        
-      end
+      end  
+    end
 
+    @y += @velocity[1]
+    gameobjects.each do |target|
+      next unless target.tag == "collider"
+      
       if rotated_rect_circle_collision(
         target.x, target.y, target.width, target.height, target.angle * Math::PI / 180,
         @last_pos[0] + @width / 2, @y - @height / 2, @width / 2

@@ -20,7 +20,7 @@ class Collider < GameObject
     end
   end
 
-  def draw
+  def draw(cam)
     if @debug
       @image.draw_rot(@x, @y, 1, @angle)
     end
