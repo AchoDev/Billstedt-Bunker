@@ -32,8 +32,9 @@ class BillstedtBunker < Gosu::Window
       image: Gosu::Image.new("sprites/logo.png"),
       x: 200,
       y: 200,
+      rotation: 0,
       velocity: 0,
-      bg_alpha: 200,
+      bg_alpha: 230,
       visible: true
     }
 
@@ -57,6 +58,11 @@ class BillstedtBunker < Gosu::Window
       Collider.new(735, 545, 55, 150, 45),
       Collider.new(600, 595, 205, 50),
       Collider.new(780, 375, 55, 280),
+
+      Collider.new(925, 370, 55, 750), # border right
+      Collider.new(-25, 370, 55, 750), # border left
+      Collider.new(455, -20, 55, 920, 90), # border top
+      Collider.new(455, 720, 55, 920, 90), # border botton
     ]
     
     @colliders.each do |collider| @gameobjects.push(collider) end
@@ -112,7 +118,7 @@ class BillstedtBunker < Gosu::Window
     @player2.y = 400
     @player2.health = 10
 
-    @logo[:bg_alpha] = 200
+    @logo[:bg_alpha] = 230
     @logo[:y] = 200
     @logo[:velocity] = 0
     @logo[:visible] = true
@@ -150,7 +156,7 @@ class BillstedtBunker < Gosu::Window
         @logo[:visible] = false
         
         Thread.new do
-          100.times do
+          200.times do
             sleep(0.01)
             @logo[:bg_alpha] -= 2
             if @logo[:bg_alpha] <= 0
@@ -256,9 +262,9 @@ class BillstedtBunker < Gosu::Window
   def shake_camera
     Thread.new do
       15.times do
-        shake_amount = 10
+        shake_amount = 5
         @camera_movement = [rand(-shake_amount..shake_amount), rand(-shake_amount..shake_amount)]
-        sleep(0.005)
+        sleep(0.02)
       end
 
       @camera_movement = [0, 0]
@@ -266,7 +272,12 @@ class BillstedtBunker < Gosu::Window
   end
 
   def draw
-    Gosu.draw_rect(0, 0, 900, 700, Gosu::Color::WHITE)
+    bg_color = Gosu::Color::BLACK
+    
+    if @winning_sequence
+      bg_color = Gosu::Color::WHITE
+    end
+    Gosu.draw_rect(0, 0, 900, 700, bg_color)
 
     if !@winning_sequence
       @map.draw(0 + @camera_movement[0], 0 + @camera_movement[1], 0)
@@ -298,6 +309,13 @@ class BillstedtBunker < Gosu::Window
 
     Gosu.draw_rect(0, 0, 900, 700, Gosu::Color.argb(@logo[:bg_alpha], 255, 255, 255), 30)
     @logo[:image].draw(@logo[:x], @logo[:y], 30, 0.2, 0.2)
+    @logo[:rotation] += 1
+
+    @logo[:y] += Math.cos(@logo[:rotation] * Math::PI / 180) * 0.5
+
+    if @logo[:visible]
+      @font.draw_text("Space to start", 350, 650, 30, 1.5, 1.5, Gosu::Color::BLACK)
+    end
   end
 end
 
