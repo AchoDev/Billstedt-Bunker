@@ -4,7 +4,7 @@ require_relative 'bullet'
 require 'gosu'
 
 class Gun
-  attr_accessor :name, :sound, :cooldown, :cooldown_timer, :cooling_down, :shoot_sound, :shooting, :offset
+  attr_accessor :name, :sound, :cooldown, :cooldown_timer, :cooling_down, :shoot_sound, :shooting, :offset, :winning_sequence
 
   def initialize(name, cooldown, offset)
     @name = name
@@ -15,10 +15,20 @@ class Gun
     @cooling_down = false
     @shooting = false
 
+    @winning_sequence = false
+
     @offset = offset
   end
 
+  def start_winning_sequence
+    @winning_sequence = true
+  end
+
   def shoot
+    if @winning_sequence
+      return
+    end
+
     @shoot_sound.play(0.5, [0.9, 0.95, 1, 1.05, 1.1].sample, false)
 
     if @name == "rifle"
@@ -38,7 +48,9 @@ class Gun
         if @cooldown_timer > @cooldown
           @cooling_down = false
           @cooldown_timer = 0
-          @equip_sound.play(0.5, 2, false)
+          if !@winning_sequence
+            @equip_sound.play(0.5, 2, false)
+          end
           break
         end
 
@@ -57,7 +69,7 @@ end
 
 class Player < GameObject
 
-  attr_accessor :current_gun, :guns, :health
+  attr_accessor :current_gun, :guns, :health, :winning_sequence
 
   def initialize(x, y, player2 = false)
     super(x, y, "player")
@@ -75,7 +87,16 @@ class Player < GameObject
     @drag = 0.1
     @movement_direction = [0, 0]
 
-    @health = 3
+    @health = 1
+    @max_health = 10
+
+    @winning_sequence = false
+
+    @health_bar = {
+      original_pos: !player2 ? [35, 565] : [620, 120],
+      pos: []
+    }
+    @health_bar[:pos] = @health_bar[:original_pos].dup
 
     @player2 = player2
 
@@ -97,6 +118,11 @@ class Player < GameObject
       pistol: Gosu::Image.new("sprites/player1/pistol.png")
     }
 
+    @heart_icons = {
+      full: Gosu::Image.new("sprites/heart.png"),
+      empty: Gosu::Image.new("sprites/empty-heart.png")
+    }
+
     if @player2 
       @player_sprites = {
         rifle: Gosu::Image.new("sprites/player2/rifle.png"),
@@ -104,6 +130,8 @@ class Player < GameObject
         pistol: Gosu::Image.new("sprites/player2/pistol.png")
       }
     end
+
+    @hit_sound = Gosu::Sample.new("sounds/hit.wav")
 
     @current_gun = @guns[:shotgun]
   end
@@ -126,8 +154,13 @@ class Player < GameObject
     @player_sprites.each do |gun, sprite|
       if @current_gun.name == gun.to_s
         # sprite.draw_rot(@x + @width / 2, @y - @height / 2, 1, @angle + 90, 0.5, 0.5, 0.05, 0.05)
-        sprite.draw_rot(@x + @width / 2, @y - @height / 2, 1, @angle + 90, 0.45, 0.75, 0.05, 0.05)
+        col = @winning_sequence ? Gosu::Color::BLACK : Gosu::Color::WHITE
+        sprite.draw_rot(@x + @width / 2, @y - @height / 2, 0, @angle + 90, 0.45, 0.75, 0.05, 0.05, col)
       end
+    end
+
+    if @winning_sequence
+      return
     end
 
     # pos = calculate_bullet_position(@current_gun.offset)
@@ -142,15 +175,16 @@ class Player < GameObject
       icon_x = 600
       icon_y = 10
     end
+
     @gun_icons.each do |gun, icon|
       if @current_gun.name == gun.to_s
         col = @player2 ? Gosu::Color::GREEN : Gosu::Color::RED 
-        icon.draw(icon_x, icon_y, 0, 0.2, 0.2, col)
+        icon.draw(icon_x, icon_y, 5, 0.2, 0.2, col)
       else
-        icon.draw(icon_x, icon_y, 0, 0.2, 0.2, Gosu::Color::WHITE)
+        icon.draw(icon_x, icon_y, 5, 0.2, 0.2, Gosu::Color::WHITE)
       end
       
-      icon.draw(icon_x, icon_y, 0, 0.2, 0.2)
+      icon.draw(icon_x, icon_y, 5, 0.2, 0.2)
 
 
       height_percentage = 0
@@ -160,14 +194,47 @@ class Player < GameObject
         height_percentage = 1 - (gun_object.cooldown_timer / gun_object.cooldown)
       end
 
-      Gosu.draw_rect(icon_x, icon_y, 100, 100 * height_percentage, Gosu::Color.argb(200, 0, 0, 0))
+      Gosu.draw_rect(icon_x, icon_y, 100, 100 * height_percentage, Gosu::Color.argb(200, 0, 0, 0), 5)
       
       icon_x += 100
     end  
+
+    bar_width = 250
+    bar_height = 30
+    percentage = @health / @max_health.to_f
+    puts percentage
+    border = 5
+
+    Gosu.draw_rect(@health_bar[:pos][0] - border, @health_bar[:pos][1] - border, bar_width + border * 2, bar_height + border * 2, Gosu::Color.argb(150, 0, 0, 0), 5)
+    Gosu.draw_rect(@health_bar[:pos][0], @health_bar[:pos][1], bar_width * percentage, 30, Gosu::Color.argb(150, 255, 0, 0), 5)
   end
 
   def set_enemy(enemy)
     @enemy = enemy
+  end
+
+  def take_damage
+    @health -= 1
+    
+    if @health <= 0
+      @health = 0
+    end
+
+    puts "Player health: #{@health}"
+
+    @hit_sound.play(0.5, 1, false)
+
+    Thread.new do
+    
+      30.times do 
+        shake_amount = 6
+        @health_bar[:pos] = [@health_bar[:original_pos][0] + rand(-shake_amount..shake_amount), @health_bar[:original_pos][1] + rand(-shake_amount..shake_amount)]
+        sleep(0.01)
+      end
+
+      @health_bar[:pos] = @health_bar[:original_pos].dup
+    end
+
   end
 
   def update(gameobjects)

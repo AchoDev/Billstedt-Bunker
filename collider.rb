@@ -2,7 +2,7 @@
 require_relative 'gameobject'
 
 class Collider < GameObject
-  attr_accessor :width, :height, :x, :y, :angle, :speed
+  attr_accessor :width, :height, :x, :y, :angle, :selected
 
   def initialize(x, y, width, height, angle = 0)
     super(x, y, "collider")
@@ -13,9 +13,10 @@ class Collider < GameObject
     @angle = angle
     
     @debug = false
+    @selected = false
 
     @image = Gosu.render(@width, @height) do
-      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color.argb(200, 255, 0, 0), 0)
+      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color.argb(200, @selected ? 0 : 255, @selected ? 255 : 0, 0), 0)
     end
   end
 
@@ -27,7 +28,7 @@ class Collider < GameObject
 
   def update(gameobjects)
     @image = Gosu.render(@width, @height) do
-      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color.argb(200, 255, 0, 0), 0)
+      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color.argb(200, 255, @selected ? 255 : 0, 0), 0)
     end
   end
 
@@ -37,7 +38,7 @@ class Collider < GameObject
       @debug = !@debug
     end
 
-    if !@debug
+    if !@debug || !@selected
       return
     end
 
@@ -65,9 +66,6 @@ class Collider < GameObject
       @width -= 5
     when Gosu::KB_RIGHT
       @width += 5
-    when Gosu::KB_SPACE
-      puts "x: #{@x}, y: #{@y}, width: #{@width}, height: #{@height}, angle: #{@angle}"
-      # Handle space key press
     end
   end
 end

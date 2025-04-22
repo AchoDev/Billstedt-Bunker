@@ -19,7 +19,7 @@ class Bullet < GameObject
     @speed = 10
 
     @image = Gosu.render(@width, @height) do
-      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color::BLACK, 0)
+      Gosu.draw_rect(0, 0, @width, @height, Gosu::Color::WHITE, 0)
     end
   end
 
@@ -41,7 +41,8 @@ class Bullet < GameObject
       next unless target.tag == "player"
 
       if circle_collision(@x, @y, @width / 2, target.x + target.width / 2, target.y - target.height / 2, target.width / 2)
-        target.health -= 1
+        target.take_damage()
+        gameobjects.delete(self)
       end
     end
   end
