@@ -229,8 +229,6 @@ class Player < GameObject
       @health = 0
     end
 
-    puts "Player health: #{@health}"
-
     @hit_sound.play(0.5, 1, false)
 
     Thread.new do

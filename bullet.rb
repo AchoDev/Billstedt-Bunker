@@ -6,6 +6,8 @@ require 'gosu'
 
 class Bullet < GameObject
 
+  @@bullet_image = nil
+
   def initialize(x, y, angle)
     super(x, y, "bullet")
     
@@ -18,13 +20,13 @@ class Bullet < GameObject
     @angle = angle - 90
     @speed = 10
 
-    @image = Gosu.render(@width, @height) do
+    @@bullet_image ||= Gosu.render(@width, @height) do
       Gosu.draw_rect(0, 0, @width, @height, Gosu::Color::WHITE, 0)
     end
   end
 
   def draw(cam)
-    @image.draw_rot(cam[0] + @x + @width / 2, cam[1] + @y - @height / 2, 1, @angle - 90)
+    @@bullet_image.draw_rot(cam[0] + @x + @width / 2, cam[1] + @y - @height / 2, 1, @angle - 90)
   end
 
   def update(gameobjects)

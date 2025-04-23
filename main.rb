@@ -74,7 +74,14 @@ class BillstedtBunker < Gosu::Window
       x: 200,
       y: -200,
       index: 0,
-      sprites: []
+      player1_sprites: [
+        Gosu::Image.new("sprites/win/player1-win1.png"),
+        Gosu::Image.new("sprites/win/player1-win2.png"),
+      ],
+      player2_sprites: [
+        Gosu::Image.new("sprites/win/player2-win1.png"),
+        Gosu::Image.new("sprites/win/player2-win2.png"),
+      ]
     }
 
     @winning_music = Gosu::Song.new("sounds/winning-music.mp3")
@@ -126,7 +133,6 @@ class BillstedtBunker < Gosu::Window
 
     @dancer[:y] = -200
     @dancer[:index] = 0
-    @dancer[:sprites] = []
     @player.winning_sequence = false
     @player2.winning_sequence = false
     @player.guns.each do |name, gun|
@@ -232,11 +238,6 @@ class BillstedtBunker < Gosu::Window
 
       sleep(0.5)
 
-      @dancer[:sprites] = [
-        Gosu::Image.new("sprites/win/#{playername}-win1.png"),
-        Gosu::Image.new("sprites/win/#{playername}-win2.png"),
-      ]
-
       @winning_music.play(false)
 
       i = 0
@@ -292,7 +293,12 @@ class BillstedtBunker < Gosu::Window
     end
 
     if @winning_sequence
-      sprite = @dancer[:sprites][@dancer[:index]]
+      if @player.health <= 0
+        sprite = @dancer[:player1_sprites][@dancer[:index]]
+      else
+        sprite = @dancer[:player2_sprites][@dancer[:index]]
+      end
+
       if sprite
         sprite.draw(@dancer[:x], @dancer[:y], 1, 0.2, 0.2)
         @font.draw_text("Player #{@player.health <= 0 ? 2 : 1} wins!", 380, 600, 1, 1.0, 1.0, Gosu::Color::BLACK)
