@@ -94,8 +94,8 @@ class Player < GameObject
       sound: Gosu::Sample.new("sounds/walk.mp3")
     }
 
-    @health = 10
-    @max_health = 10
+    @health = 7
+    @max_health = 7
 
     @winning_sequence = false
 

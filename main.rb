@@ -99,7 +99,7 @@ class BillstedtBunker < Gosu::Window
 
     @player.x = 850
     @player.y = 400
-    @player.health = 10
+    @player.health = 7
 
     @gameobjects.each do |object|
       if object.tag == "bullet"
@@ -116,7 +116,7 @@ class BillstedtBunker < Gosu::Window
 
     @player2.x = 100
     @player2.y = 400
-    @player2.health = 10
+    @player2.health = 7
 
     @logo[:bg_alpha] = 230
     @logo[:y] = 200
@@ -149,7 +149,7 @@ class BillstedtBunker < Gosu::Window
           break
         end
       end
-    when Gosu::KB_R
+    when Gosu::KB_B
       restart()
     when Gosu::KB_SPACE
       if @logo[:visible] 
@@ -296,7 +296,7 @@ class BillstedtBunker < Gosu::Window
       if sprite
         sprite.draw(@dancer[:x], @dancer[:y], 1, 0.2, 0.2)
         @font.draw_text("Player #{@player.health <= 0 ? 2 : 1} wins!", 380, 600, 1, 1.0, 1.0, Gosu::Color::BLACK)
-        @font.draw_text("Press R to restart the game", 320, 620, 1, 1.0, 1.0, Gosu::Color::BLACK)
+        @font.draw_text("Press B to restart the game", 320, 620, 1, 1.0, 1.0, Gosu::Color::BLACK)
       end
     end
 
